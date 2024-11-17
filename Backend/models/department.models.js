@@ -6,6 +6,12 @@ const departmentSchema = new Schema(
       type: String,
       required: true,
     },
+    taskId:{
+      type:Schema.Types.ObjectId, ref:"Task"
+    },
+    projectOverviewId:{
+      type: Schema.Types.ObjectId, ref:"overview"
+    }
   },
   { timestamps: true }
 );
