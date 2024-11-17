@@ -6,4 +6,5 @@ router.post("/", task.addingTaskToAllWeeks);
 router.put("/update",task.updateParticularWeekTasks);
 router.delete("/delete",task.deleteTaskAtParticularWeek);
 router.get("/", task.getAllTasksOfParticularDepartment);
+router.get("/particularweek",task.getTaskofParticularDepartmentofOneWeek);
 export default router;
