@@ -6,14 +6,16 @@ const departmentSchema = new Schema(
       type: String,
       required: true,
     },
-    taskId:{
-      type:Schema.Types.ObjectId, ref:"Task"
+    taskId: {
+      type:Schema.Types.ObjectId,
+      ref:"Task"
     },
-    projectOverviewId:{
-      type: Schema.Types.ObjectId, ref:"overview"
+    projectoverviewId: {
+      type:Schema.Types.ObjectId,
+      ref:"overview"
     }
   },
   { timestamps: true }
 );
 
-export default model("department",departmentSchema);
+export default model("department", departmentSchema);
