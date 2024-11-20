@@ -1,4 +1,6 @@
 import Submission from "../models/submission.models.js";
+import userModel from "../models/user.models.js";
+import departmentModels from "../models/department.models.js";
 import cloudinaryService from "../services/cloudinary.service.js";
 import { ErrorResponse } from "../utils/errorResponse.js";
 
@@ -13,13 +15,18 @@ const allowedMimeTypes = ["image/png", "image/jpeg", "application/pdf"];
  */
 export const createSubmission = async (req, res, next) => {
   try {
-    const { userId, departementId, weekNumber, notes, links, username } =
-      req.query;
-
-    if (!userId || !weekNumber) {
+    const { departmentName, weekNumber , notes, links, username } = req.body;
+    console.log(req.body);
+    const user = await userModel.findOne({ name: username });
+    console.log(username);
+    const departement = await departmentModels.findOne({ name: departmentName });
+    if (!user) throw new ErrorResponse("User Not found", 400);
+    if (!departement) throw new ErrorResponse("Department Not found", 400);
+    if (!weekNumber) {
       throw new ErrorResponse("User ID and Week Number are required.", 400);
     }
-
+    const { userId } = user;
+    const { departementId } = departement;
     const files = [...(req.files?.files || []), ...(req.files?.images || [])];
     const filteredFiles = files.filter((file) =>
       allowedMimeTypes.includes(file.mimetype)

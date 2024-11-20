@@ -10,9 +10,9 @@ const departmentSchema = new Schema(
       type:Schema.Types.ObjectId,
       ref:"Task"
     },
-    projectoverviewId: {
+    projectId: {
       type:Schema.Types.ObjectId,
-      ref:"overview"
+      ref:"Overview"
     }
   },
   { timestamps: true }

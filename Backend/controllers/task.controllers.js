@@ -169,12 +169,14 @@ export const getAllTasksOfParticularDepartment = async (req, res) => {
 export const getTaskofParticularDepartmentofOneWeek = async (req, res) => {
   try {
     const { title, weekNumber } = req.query;
+    console.log(title,weekNumber);
     if (!title || !weekNumber)
       return res.status(400).json({
         status: "Error",
         message: "Both title and weekNumber is required",
       });
-    const task = await Task.findOne({ mainTitle: title.toLowerCase() });
+    const task = await Task.findOne({ departmentName: title });
+    console.log(task);
     return res.status(200).json({
       status:"Success",
       weektask: task.weeklyPlans[Number(weekNumber-1)]

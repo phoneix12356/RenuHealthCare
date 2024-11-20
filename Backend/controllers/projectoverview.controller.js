@@ -1,91 +1,134 @@
+
 import projectoverviewModels from "../models/projectoverview.models.js";
 
-const addproject = async (req, res) => {
-    try {
-        const { overview, internshipType, startDate, endDate, projectDeadline, procedure } = req.body;
-        if (!overview || !internshipType || !startDate || !endDate || !projectDeadline || !procedure) {
-            return res.status(400).json({ Error: "Request is Incomplete" });
-        }
-        const newproject = new projectoverviewModels({
-            overview: overview,
-            internshipType: internshipType,
-            startDate: startDate,
-            endDate: endDate,
-            projectDeadline: projectDeadline,
-            procedure: procedure
-        });
-        await newproject.save(newproject);
-        const projectname = {overview: newproject.overview};
-        const foundProject = await projectoverviewModels.find(projectname);
-        return res.status(201).json(foundProject);
-    } catch (error) {
-        return res.status(500).json({ Error: error.message });
-        console.log(error);
-    }
-};
-const getproject = async (req, res) => {
-    try {
-        const { overview, internshipType, startDate, endDate, projectDeadline, procedure } = req.body;
-        if (!overview || !internshipType || !startDate || !endDate || !endDate || !projectDeadline || !procedure) {
-            return res.status(400).json({ Error: "Request is Incomplete" });
-        }
-        const findproject = await projectoverviewModels.findOne({ overview: overview });
-        if (!findproject) {
-            return res.status(404).json({ Error: "Project not found" });
-        }
-        res.status(200).json(findproject);
-    } catch (error) {
-        return res.status(500).json({ Error: error.message });
-        console.log(error);
-    }
-};
-const updateproject = async (req, res) => {
-    try {
-        const { overview, internshipType, startDate, endDate, projectDeadline, procedure } = req.body;
-        if (!overview || !internshipType || !startDate || !endDate || !projectDeadline || !procedure) {
-            return res.status(400).json({ Error: "Request is Incomplete" });
-        }
-        const findproject = await projectoverviewModels.findOne({ overview: overview });
-        if (!findproject) {
-            return req.status(404).json({ Error: "Project Not Found" });
-        }
-        const updatedproject = {
-            overview: overview,
-            internshipType: internshipType,
-            startDate: startDate,
-            endDate: endDate,
-            projectDeadline: projectDeadline,
-            procedure: procedure
-        };
-        const projectUpdate = await projectoverviewModels.findOneAndUpdate({ overview: overview }, updatedproject);
-        return res.status(300).json(await projectoverviewModels.findOne({ overview: overview }));
-    } catch (error) {
-        return res.status(500).json({ Error: error.message });
-        console.log(error);
-    }
-};
-const deleteproject = async (req, res) => {
-    try {
-        const { overview, internshipType, startDate, endDate, projectDeadline, procedure } = req.body;
-        if (!overview || !internshipType || !startDate || !endDate || !projectDeadline || !procedure) {
-            return res.status(400).json({ Error: "Request is Incomplete" });
-        }
-        const findproject = projectoverviewModels.findOne({ overview: overview });
-        if (!findproject) {
-            return res.status(404).json({ Error: "Project Not Found" });
-        }
-        await projectoverviewModels.findOneAndDelete({ overview: overview });
-        return res.status(201).json({ Status: "Project Deleted Successfully" });
-    } catch (error) {
-        return res.status(500).json({ Error: error.message });
-        console.log(error);
-    }
+// Helper function to validate request body
+const validateFields = (body, requiredFields) => {
+  return requiredFields.every(field => !!body[field]);
 };
 
+// Add Project
+const addProject = async (req, res) => {
+  try {
+    const { departmentName, overview, procedure, duration } = req.body;
 
-export {
-    addproject,
-    getproject,
-    updateproject,
-    deleteproject
+    // Validate required fields
+    if (!validateFields(req.body, ['departmentName', 'overview', 'procedure'])) {
+      return res.status(400).json({ error: "Required fields missing" });
+    }
+
+    const newProject = new projectoverviewModels({
+      departmentName,
+      overview,
+      procedure,
+      duration: duration || 3 // Use default if not provided
+    });
+
+    const savedProject = await newProject.save();
+    return res.status(201).json(savedProject);
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Server error" });
+  }
 };
+
+// Get Project
+const getProject = async (req, res) => {
+  try {
+    const { overview } = req.body;
+
+    if (!overview) {
+      return res.status(400).json({ error: "Overview is required" });
+    }
+
+    const project = await projectoverviewModels.findOne({ overview });
+
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    return res.status(200).json(project);
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
+// Update Project
+const updateProject = async (req, res) => {
+  try {
+    const {
+      overview,
+      internshipType,
+      startDate,
+      endDate,
+      projectDeadline,
+      procedure,
+      departmentName
+    } = req.body;
+
+    // Validate required fields
+    if (!validateFields(req.body, [
+      'overview',
+      'internshipType',
+      'startDate',
+      'endDate',
+      'projectDeadline',
+      'procedure',
+      'departmentName'
+    ])) {
+      return res.status(400).json({ error: "Required fields missing" });
+    }
+
+    const updatedProject = await projectoverviewModels.findOneAndUpdate(
+      { overview },
+      {
+        $set: {
+          internshipType,
+          startDate,
+          endDate,
+          projectDeadline,
+          procedure,
+          departmentName
+        }
+      },
+      { new: true } // Return updated document
+    );
+
+    if (!updatedProject) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    return res.status(200).json(updatedProject);
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
+// Delete Project
+const deleteProject = async (req, res) => {
+  try {
+    const { overview } = req.body;
+
+    if (!overview) {
+      return res.status(400).json({ error: "Overview is required" });
+    }
+
+    const deletedProject = await projectoverviewModels.findOneAndDelete({ overview });
+
+    if (!deletedProject) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    return res.status(200).json({ message: "Project deleted successfully" });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
+export { addProject, getProject, updateProject, deleteProject };

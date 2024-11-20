@@ -57,9 +57,8 @@ const taskSchema = new Schema(
       type: String,
       trim: true,
     },
-    departmentId: {
-      type: Schema.Types.ObjectId,
-      ref: "department",
+    departmentName: {
+      type: String,
     },
     weeklyPlans: [[weeklyPlanSchema]],
   },

@@ -1,14 +1,13 @@
 import { Schema, model } from "mongoose";
 
 const overviewSchema = new Schema({
+  departmentName:{
+    type:String,
+    required:true
+  },
   overview: {
     type: String, // Changed from 'string' to 'String'
     required: true,
-  },
-  internshipType: {
-    type: String,
-    enum: ["Paid", "Unpaid"],
-    default: "Unpaid",
   },
   duration: {
     type: Number,
@@ -16,19 +15,7 @@ const overviewSchema = new Schema({
     default: 3, // Changed from 'defaule' to 'default'
     required: true,
   },
-  startDate: {
-    type: Date,
-    required: true,
-  },
-  endDate: {
-    type: Date,
-    required: true,
-  },
-  projectDeadline: {
-    type: Date,
-    required: true,
-  },
-  procedure: [{
+  rules: [{
     type: String,
     required: true, // Changed from 'requried' to 'required'
   }],

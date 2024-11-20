@@ -1,62 +1,83 @@
-import express from 'express';
-import { body, validationResult } from 'express-validator';
-import * as user from "../controllers/user.controllers.js";
+import express from "express";
+import { body, validationResult } from "express-validator";
+import {
+  addUser,
+  login,
+  sendEmailResetPassword,
+  userPasswordReset,
+  changeUserPassword,
+} from "../controllers/user.controllers.js";
+import { authenticateUser } from "../middleware/auth.middleware.js";
+
 const router = express.Router();
 
-router.post('/', [
-    body("name").notEmpty(),
-    body("email").isEmail(),
-    body("password").isLength({ min: 5 }),
-    body("phoneNumber").notEmpty(),
-    body("college").notEmpty(),
-    body("city").notEmpty(),
-    body("state").notEmpty(),
-    body("departmentName").notEmpty(),
-    body("startDate").isDate(),
-    body("endDate").isDate()
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
-    }
-    try {
-        await user.addUser(req, res);
-    } catch (error) {
-        console.log(error);
-    }
+// Validation middleware
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      status: "failed",
+      errors: errors.array().map((err) => ({
+        field: err.path,
+        message: err.msg,
+      })),
+    });
+  }
+  next();
+};
+
+// Registration
+router.post(
+  "/register",
+  (req, res, next) => {
+    console.log("register");
+    next();
+  },
+  addUser
+);
+
+// Login
+router.post(
+  "/login",
+  (req, res, next) => {
+    console.log("/login");
+    next();
+  },
+  login
+);
+
+// Password reset routes
+router.post(
+  "/send-reset-password",
+  [body("email").isEmail(), handleValidationErrors],
+  sendEmailResetPassword
+);
+
+router.post(
+  "/reset-password/:id/:token",
+  [body("newPassword").isLength({ min: 5 }), handleValidationErrors],
+  userPasswordReset
+);
+
+// Change password (authenticated route)
+router.post(
+  "/change-password",
+  [
+    authenticateUser,
+    body("currentPassword").isLength({ min: 5 }),
+    body("newPassword").isLength({ min: 5 }),
+    handleValidationErrors,
+  ],
+  changeUserPassword
+);
+
+// Protected route example
+router.get("/protected-route", authenticateUser, (req, res) => {
+  res.json({
+    status: "success",
+    message: "Protected route accessed",
+    user: req.user,
+  });
 });
 
-router.post("/login", [
-    body("email").isEmail(),
-    body("password").isLength({ min: 5 })
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
-    }
-    try {
-        await user.login(req, res);
-    } catch (error) {
-        console.log(error);
-    }
-});
-
-router.post("/changepassword", [
-    body("email").isEmail(),
-    body("password").isLength({ min: 5 })
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({ error: errors.array() });
-    }
-    try {
-        await user.login(req, res);
-    } catch (error) {
-        console.log(error);
-    }
-});
-
-router.post("/send-reset-password", user.sendEmailResetPassword);
-router.post("/reset/password/:id/:token", user.userPasswordReset);
-router.post("/changepassword", user.changeUserPassword);
 export default router;
