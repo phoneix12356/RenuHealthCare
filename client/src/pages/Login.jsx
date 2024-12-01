@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import  { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import api from "../api/api";
 import { useUser } from "../context/userContext";
 const Login = () => {
@@ -12,7 +11,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const {setUser} = useUser();
+  const { setUser } = useUser();
 
   const handleChange = ({ target: { name, value } }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -24,10 +23,7 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await api.post(
-      "/user/login",
-        formData
-      );
+      const response = await api.post("/user/login", formData);
 
       if (response.data.status === "success") {
         setUser(response.data.user);
@@ -37,18 +33,6 @@ const Login = () => {
       setError(err.response?.data?.message || "Login failed");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await axios.post("http://localhost:5000/api/user/logout", null, {
-        withCredentials: true, // Include cookies
-      });
-
-      navigate("/login"); // Redirect to login after logout
-    } catch (err) {
-      setError(err.response?.data?.message || "Logout failed");
     }
   };
 
@@ -119,16 +103,8 @@ const Login = () => {
             {isLoading ? "Logging in..." : "Log In"}
           </button>
 
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="mt-4 w-full flex justify-center py-3 px-4 border border-red-600 rounded-md shadow-sm text-sm font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          >
-            Logout
-          </button>
-
           <p className="mt-4 text-center text-sm text-gray-600">
-            Don't have an account?{" "}
+            Don{'`'}t have an account?{" "}
             <Link
               to="/signup"
               className="font-medium text-indigo-600 hover:text-indigo-500"

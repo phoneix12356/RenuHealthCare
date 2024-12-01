@@ -2,7 +2,6 @@ import { v2 as cloudinary } from 'cloudinary';
 
 class CloudinaryService {
   constructor() {
-    // Configure Cloudinary
     cloudinary.config({
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
       api_key: process.env.CLOUDINARY_API_KEY,
@@ -11,37 +10,28 @@ class CloudinaryService {
   }
 
   /**
-   * Upload a file (image or PDF) to Cloudinary
-   * @param {Buffer|string} file - File buffer or base64 string
-   * @param {Object} options - Upload options
-   * @returns {Promise<Object>} Cloudinary upload response
+   * Upload a file directly to Cloudinary
    */
   async uploadFile(file, options = {}) {
     try {
       const defaultOptions = {
-        resource_type: 'auto', // Automatically detect resource type
-        folder: 'uploads',     // Default folder
-        use_filename: true,    // Use original filename
-        unique_filename: true, // Add unique identifier
+        resource_type: 'auto',
+        folder: 'uploads',
+        use_filename: true,
+        unique_filename: true,
       };
 
       const uploadOptions = { ...defaultOptions, ...options };
-      
-      // Handle both Buffer and base64 string inputs
-      const fileToUpload = file instanceof Buffer 
+
+      const fileBuffer = file instanceof Buffer 
         ? file 
         : this.convertBase64ToBuffer(file);
 
       const result = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          uploadOptions,
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-
-        uploadStream.end(fileToUpload);
+        cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }).end(fileBuffer); // Directly send the file buffer
       });
 
       return {
@@ -56,26 +46,38 @@ class CloudinaryService {
         },
       };
     } catch (error) {
+      console.error('Upload error details:', error);
       return {
         success: false,
         error: error.message || 'Upload failed',
+        details: error.stack,
       };
     }
   }
 
   /**
-   * Upload an image with image-specific optimizations
-   * @param {Buffer|string} image - Image buffer or base64 string
-   * @param {Object} options - Additional upload options
-   * @returns {Promise<Object>} Upload response
+   * Convert Base64 string to Buffer
+   */
+  convertBase64ToBuffer(base64String) {
+    const base64Data = base64String.replace(/^data:.*?;base64,/, '');
+    return Buffer.from(base64Data, 'base64');
+  }
+
+  /**
+   * Upload an image with optimized settings
    */
   async uploadImage(image, options = {}) {
     const imageOptions = {
       folder: 'images',
       transformation: [
-        { quality: 'auto:best' }, // Automatic quality optimization
-        { fetch_format: 'auto' }, // Automatic format optimization
+        { quality: 'auto:good' }, // Slightly reduced quality for faster uploads
+        { fetch_format: 'auto' },
+        { flags: 'progressive' }, // Progressive loading
       ],
+      eager: [
+        { width: 800, height: 800, crop: 'limit' }, // Generate thumbnail
+      ],
+      eager_async: true,
       ...options,
     };
 
@@ -83,66 +85,38 @@ class CloudinaryService {
   }
 
   /**
-   * Upload a PDF document
-   * @param {Buffer|string} pdf - PDF buffer or base64 string
-   * @param {Object} options - Additional upload options
-   * @returns {Promise<Object>} Upload response
+   * Upload a PDF with optimized settings
    */
   async uploadPDF(pdf, options = {}) {
     const pdfOptions = {
       folder: 'pdfs',
-      resource_type: 'auto', // Changed from 'raw' to 'auto'
+      resource_type: 'auto',
       format: 'pdf',
-      flags: 'attachment', // Ensures browser displays PDF instead of downloading
-      transformation: [
-        { flags: "attachment" }
-      ],
+      flags: 'attachment',
+      use_filename: true,
+      transformation: [{ flags: 'attachment' }],
       ...options,
     };
 
     try {
-      const fileToUpload = pdf instanceof Buffer 
-        ? pdf 
-        : this.convertBase64ToBuffer(pdf);
-
-      const result = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          pdfOptions,
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
-
-        uploadStream.end(fileToUpload);
-      });
-
-      // Transform the URL to ensure PDF viewing
-      const viewerUrl = result.secure_url.replace('/upload/', '/upload/fl_attachment/');
-
-      return {
-        success: true,
-        data: {
-          url: viewerUrl,
-          publicId: result.public_id,
-          format: 'pdf',
-          resourceType: result.resource_type,
-          size: result.bytes,
-          createdAt: result.created_at,
-        },
-      };
+      const result = await this.uploadFile(pdf, pdfOptions);
+      if (result.success) {
+        // Transform the URL for better PDF viewing
+        result.data.url = result.data.url.replace('/upload/', '/upload/fl_attachment/');
+      }
+      return result;
     } catch (error) {
+      console.error('PDF upload error:', error);
       return {
         success: false,
         error: error.message || 'PDF upload failed',
+        details: error.stack,
       };
     }
   }
+
   /**
-   * Delete a file from Cloudinary
-   * @param {string} publicId - Public ID of the file to delete
-   * @param {Object} options - Delete options
-   * @returns {Promise<Object>} Deletion response
+   * Delete a file by public ID
    */
   async deleteFile(publicId, options = {}) {
     try {
@@ -152,25 +126,14 @@ class CloudinaryService {
         data: result,
       };
     } catch (error) {
+      console.error('Deletion error details:', error);
       return {
         success: false,
         error: error.message || 'Deletion failed',
+        details: error.stack,
       };
     }
-  }
-
-  /**
-   * Convert base64 string to Buffer
-   * @param {string} base64String - Base64 encoded string
-   * @returns {Buffer} Converted buffer
-   */
-  convertBase64ToBuffer(base64String) {
-    // Remove data URI prefix if present
-    const base64Data = base64String.replace(/^data:.*?;base64,/, '');
-    return Buffer.from(base64Data, 'base64');
   }
 }
 
 export default new CloudinaryService();
-
-

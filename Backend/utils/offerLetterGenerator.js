@@ -43,7 +43,7 @@ class InternshipOfferLetterGenerator {
       departmentName,
       startDate,
       endDate,
-      tenure = 3,
+      tenure = 1,
     } = candidateDetails;
     console.log(candidateDetails);
     const style = this._generateStyleConfig();
@@ -226,7 +226,8 @@ Our internship coordination team is available to address any questions or concer
 
       writeStream.on("finish", () => {
         console.log(`Internship offer letter generated: ${offerLetterPath}`);
-        resolve({ path: offerLetterPath });
+        fs.unlink(offerLetterPath);
+        resolve();
       });
 
       writeStream.on("error", (error) => {

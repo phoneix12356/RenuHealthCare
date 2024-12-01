@@ -5,23 +5,12 @@ import {
   updateProject,
   deleteProject,
 } from "../controllers/projectoverview.controller.js";
+import { asyncHandler } from "../utils/asyncHandlers.utils.js";
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  getProject(req, res);
-  console.log("Fetched Project");
-});
-router.post("/", (req, res) => {
-  addProject(req, res);
-  console.log("Added Project");
-});
-router.put("/", (req, res) => {
-  updateProject(req, res);
-  console.log("Updated Project");
-});
-router.delete("/", (req, res) => {
-  deleteProject(req, res);
-  console.log("Deleted Project");
-});
+router.get("/", asyncHandler(getProject));
+router.post("/", asyncHandler(addProject));
+router.put("/", asyncHandler(updateProject));
+router.delete("/", asyncHandler(deleteProject));
 
 export default router;

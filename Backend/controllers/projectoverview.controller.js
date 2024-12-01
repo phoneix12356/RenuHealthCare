@@ -1,134 +1,159 @@
-
 import projectoverviewModels from "../models/projectoverview.models.js";
+import CustomError from "../utils/errorResponse.js";
 
 // Helper function to validate request body
 const validateFields = (body, requiredFields) => {
-  return requiredFields.every(field => !!body[field]);
+  return requiredFields.every((field) => !!body[field]);
 };
 
 // Add Project
 const addProject = async (req, res) => {
-  try {
-    const { departmentName, overview, procedure, duration } = req.body;
+  const {
+    departmentName,
+    projectOverview,
+    internshipType,
+    internshipDuration,
+    developmentProcedure,
+    requiredSkills,
+    internshipPerks,
+    internTestimonials,
+    departmentSpecificRequirements,
+    internshipLocation,
+    departmentHead,
+    internshipStartDate,
+    internshipEndDate,
+  } = req.body;
 
-    // Validate required fields
-    if (!validateFields(req.body, ['departmentName', 'overview', 'procedure'])) {
-      return res.status(400).json({ error: "Required fields missing" });
-    }
-
-    const newProject = new projectoverviewModels({
-      departmentName,
-      overview,
-      procedure,
-      duration: duration || 3 // Use default if not provided
-    });
-
-    const savedProject = await newProject.save();
-    return res.status(201).json(savedProject);
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Server error" });
+  // Validate required fields
+  if (
+    !validateFields(req.body, [
+      "departmentName",
+      "projectOverview",
+      "developmentProcedure",
+      "requiredSkills",
+      "internshipPerks",
+    ])
+  ) {
+    throw new CustomError("Required fields are missing", 400);
   }
+
+  const newProject = new projectoverviewModels({
+    departmentName,
+    projectOverview,
+    internshipType: internshipType || "Unpaid",
+    internshipDuration: internshipDuration || 3,
+    developmentProcedure,
+    requiredSkills,
+    internshipPerks,
+    internTestimonials: internTestimonials || [],
+    departmentSpecificRequirements: departmentSpecificRequirements || {},
+    internshipLocation: internshipLocation || "Remote",
+    departmentHead: departmentHead || "Not Assigned",
+    internshipStartDate,
+    internshipEndDate,
+  });
+
+  const savedProject = await newProject.save();
+
+  return res.status(201).json({
+    status: "Success",
+    savedProject,
+  });
 };
 
 // Get Project
 const getProject = async (req, res) => {
-  try {
-    const { overview } = req.body;
+  const { departmentName } = req.query;
 
-    if (!overview) {
-      return res.status(400).json({ error: "Overview is required" });
-    }
-
-    const project = await projectoverviewModels.findOne({ overview });
-
-    if (!project) {
-      return res.status(404).json({ error: "Project not found" });
-    }
-
-    return res.status(200).json(project);
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Server error" });
+  if (!departmentName) {
+    throw new CustomError("departmentName is required", 400);
   }
+
+  const project = await projectoverviewModels.findOne({ departmentName });
+
+  if (!project) {
+    throw new CustomError("Project not found", 404);
+  }
+
+  return res.status(200).json(project);
 };
 
 // Update Project
 const updateProject = async (req, res) => {
-  try {
-    const {
-      overview,
-      internshipType,
-      startDate,
-      endDate,
-      projectDeadline,
-      procedure,
-      departmentName
-    } = req.body;
+  const {
+    departmentName,
+    projectOverview,
+    internshipType,
+    internshipDuration,
+    developmentProcedure,
+    requiredSkills,
+    internshipPerks,
+    internTestimonials,
+    departmentSpecificRequirements,
+    internshipLocation,
+    departmentHead,
+    internshipStartDate,
+    internshipEndDate,
+  } = req.body;
 
-    // Validate required fields
-    if (!validateFields(req.body, [
-      'overview',
-      'internshipType',
-      'startDate',
-      'endDate',
-      'projectDeadline',
-      'procedure',
-      'departmentName'
-    ])) {
-      return res.status(400).json({ error: "Required fields missing" });
-    }
-
-    const updatedProject = await projectoverviewModels.findOneAndUpdate(
-      { overview },
-      {
-        $set: {
-          internshipType,
-          startDate,
-          endDate,
-          projectDeadline,
-          procedure,
-          departmentName
-        }
-      },
-      { new: true } // Return updated document
-    );
-
-    if (!updatedProject) {
-      return res.status(404).json({ error: "Project not found" });
-    }
-
-    return res.status(200).json(updatedProject);
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Server error" });
+  // Validate required fields
+  if (
+    !validateFields(req.body, [
+      "departmentName",
+      "projectOverview",
+      "developmentProcedure",
+      "requiredSkills",
+      "internshipPerks",
+    ])
+  ) {
+    throw new CustomError("Required fields are missing", 400);
   }
+
+  const updatedProject = await projectoverviewModels.findOneAndUpdate(
+    { departmentName },
+    {
+      $set: {
+        projectOverview,
+        internshipType,
+        internshipDuration,
+        developmentProcedure,
+        requiredSkills,
+        internshipPerks,
+        internTestimonials,
+        departmentSpecificRequirements,
+        internshipLocation,
+        departmentHead,
+        internshipStartDate,
+        internshipEndDate,
+      },
+    },
+    { new: true } // Return updated document
+  );
+
+  if (!updatedProject) {
+    throw new CustomError("Project not found", 404);
+  }
+
+  return res.status(200).json(updatedProject);
 };
 
 // Delete Project
 const deleteProject = async (req, res) => {
-  try {
-    const { overview } = req.body;
+  const { departmentName } = req.body;
 
-    if (!overview) {
-      return res.status(400).json({ error: "Overview is required" });
-    }
-
-    const deletedProject = await projectoverviewModels.findOneAndDelete({ overview });
-
-    if (!deletedProject) {
-      return res.status(404).json({ error: "Project not found" });
-    }
-
-    return res.status(200).json({ message: "Project deleted successfully" });
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Server error" });
+  if (!departmentName) {
+    throw new CustomError("departmentName is required", 400);
   }
+
+  const deletedProject = await projectoverviewModels.findOneAndDelete({
+    departmentName,
+  });
+
+  if (!deletedProject) {
+    throw new CustomError("Project not found", 404);
+  }
+
+  return res.status(200).json({ message: "Project deleted successfully" });
 };
 
 export { addProject, getProject, updateProject, deleteProject };

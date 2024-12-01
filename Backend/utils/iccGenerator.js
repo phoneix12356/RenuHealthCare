@@ -65,7 +65,7 @@ We wish ${name} all the best for their future endeavors and look forward to witn
       doc.on("end", () => resolve(Buffer.concat(buffers)));
       const style = this._generateStyleConfig();
       const template = this._getCertificateContent(candidateDetails);
-
+      console.log("process.cwd", process.cwd());
       const outputDir = path.join(process.cwd(), "completion-certificates");
       fs.mkdirSync(outputDir, { recursive: true });
 
@@ -129,7 +129,8 @@ We wish ${name} all the best for their future endeavors and look forward to witn
 
       writeStream.on("finish", () => {
         console.log(`Internship completion certificate generated: ${certificatePath}`);
-        resolve({ path: certificatePath });
+        fs.unlink(certificatePath);
+        resolve();
       });
 
       writeStream.on("error", (error) => {

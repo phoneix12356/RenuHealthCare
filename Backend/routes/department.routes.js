@@ -1,14 +1,20 @@
-import express from 'express';
-import { addDept, deleteDepartment, getDepartment, updateDepartment } from '../controllers/department.controller.js';
+import express from "express";
+import {
+  addDept,
+  deleteDepartment,
+  getDepartment,
+  updateDepartment,
+} from "../controllers/department.controller.js";
+import { asyncHandler } from "../utils/asyncHandlers.utils.js";
+import { authenticateUser } from "../middleware/auth.middleware.js";
 const router = express.Router();
 
-router.post('/', (req, res) => { addDept(req, res); console.log('Added Department') });
+router.post("/", asyncHandler(addDept));
 
-router.get('/', (req, res) => { getDepartment(req, res); console.log('Fetched Department') });
+router.get("/", authenticateUser, asyncHandler(getDepartment));
 
-router.put('/', (req, res) => { updateDepartment(req, res); console.log('Updated Department') });
+router.put("/", authenticateUser, asyncHandler(updateDepartment));
 
-router.delete('/', (req, res) => { deleteDepartment(req, res); console.log('Deleted Department') });
-
+router.delete("/", authenticateUser, asyncHandler(deleteDepartment));
 
 export default router;

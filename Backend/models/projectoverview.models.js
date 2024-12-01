@@ -1,24 +1,68 @@
 import { Schema, model } from "mongoose";
 
-const overviewSchema = new Schema({
-  departmentName:{
-    type:String,
-    required:true
+const projectSchema = new Schema(
+  {
+    departmentName: {
+      type: String,
+      required: true,
+    },
+    projectOverview: {
+      type: String,
+      required: true,
+    },
+    internshipType: {
+      type: String,
+      enum: ["Paid", "Unpaid"], // Clarified internship type options
+      default: "Unpaid",
+      required: true,
+    },
+    internshipDuration: {
+      type: Number,
+      enum: [3, 6], // Duration options in months
+      default: 3,
+      required: true,
+    },
+    developmentProcedure: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
+    requiredSkills: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
+    internshipPerks: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
+    internTestimonials: [
+      {
+        internName: {
+          type: String,
+          required: true,
+        },
+        internRole: {
+          type: String,
+          required: true,
+        },
+        testimonialText: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
+    // Department-Specific Fields
+    departmentSpecificRequirements: {
+      type: Schema.Types.Mixed, // Allow different structures for different departments
+      required: false,
+    },
   },
-  overview: {
-    type: String, // Changed from 'string' to 'String'
-    required: true,
-  },
-  duration: {
-    type: Number,
-    enum: [3, 6],
-    default: 3, // Changed from 'defaule' to 'default'
-    required: true,
-  },
-  rules: [{
-    type: String,
-    required: true, // Changed from 'requried' to 'required'
-  }],
-}, { timestamps: true });
+  { timestamps: true }
+);
 
-export default model("Overview", overviewSchema);
+export default model("Project", projectSchema);

@@ -6,8 +6,10 @@ import {
   sendEmailResetPassword,
   userPasswordReset,
   changeUserPassword,
+  getUserById,
 } from "../controllers/user.controllers.js";
 import { authenticateUser } from "../middleware/auth.middleware.js";
+import { asyncHandler } from "../utils/asyncHandlers.utils.js";
 
 const router = express.Router();
 
@@ -27,36 +29,22 @@ const handleValidationErrors = (req, res, next) => {
 };
 
 // Registration
-router.post(
-  "/register",
-  (req, res, next) => {
-    console.log("register");
-    next();
-  },
-  addUser
-);
+router.post("/register", asyncHandler(addUser));
 
 // Login
-router.post(
-  "/login",
-  (req, res, next) => {
-    console.log("/login");
-    next();
-  },
-  login
-);
+router.post("/login", asyncHandler(login));
 
 // Password reset routes
 router.post(
   "/send-reset-password",
   [body("email").isEmail(), handleValidationErrors],
-  sendEmailResetPassword
+  asyncHandler(sendEmailResetPassword)
 );
 
 router.post(
   "/reset-password/:id/:token",
   [body("newPassword").isLength({ min: 5 }), handleValidationErrors],
-  userPasswordReset
+  asyncHandler(userPasswordReset)
 );
 
 // Change password (authenticated route)
@@ -68,16 +56,10 @@ router.post(
     body("newPassword").isLength({ min: 5 }),
     handleValidationErrors,
   ],
-  changeUserPassword
+  asyncHandler(changeUserPassword)
 );
 
 // Protected route example
-router.get("/protected-route", authenticateUser, (req, res) => {
-  res.json({
-    status: "success",
-    message: "Protected route accessed",
-    user: req.user,
-  });
-});
+router.get("/", authenticateUser, asyncHandler(getUserById));
 
 export default router;

@@ -1,11 +1,12 @@
 import express from "express";
 import multer from "multer";
-import { 
-  createSubmission, 
-  getSubmissionsByWeek, 
-  deleteSubmission 
+import {
+  createSubmission,
+  getUserSubmission,
+  deleteSubmission,
 } from "../controllers/submission.controller.js";
-import { ErrorResponse } from "../utils/errorResponse.js";
+import CustomError from "../utils/errorResponse.js";
+import { asyncHandler } from "../utils/asyncHandlers.utils.js";
 
 const router = express.Router();
 
@@ -19,7 +20,13 @@ const fileFilter = (req, file, cb) => {
   if (allowedMimeTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new ErrorResponse(`File type ${file.mimetype} is not allowed. Only PNG, JPEG, and PDF are accepted.`, 400), false);
+    cb(
+      new CustomError(
+        `File type ${file.mimetype} is not allowed. Only PNG, JPEG, and PDF are accepted.`,
+        400
+      ),
+      false
+    );
   }
 };
 
@@ -44,20 +51,21 @@ const handleMulterUpload = (req, res, next) => {
       let statusCode = 400;
 
       switch (err.code) {
-        case 'LIMIT_FILE_SIZE':
-          errorMessage = 'File size exceeds the 3MB limit';
+        case "LIMIT_FILE_SIZE":
+          errorMessage = "File size exceeds the 3MB limit";
           break;
-        case 'LIMIT_FILE_COUNT':
-          errorMessage = 'Too many files uploaded. Maximum is 4 files (1 PDF and 3 images)';
+        case "LIMIT_FILE_COUNT":
+          errorMessage =
+            "Too many files uploaded. Maximum is 4 files (1 PDF and 3 images)";
           break;
-        case 'LIMIT_UNEXPECTED_FILE':
-          errorMessage = 'Unexpected field name in upload';
+        case "LIMIT_UNEXPECTED_FILE":
+          errorMessage = "Unexpected field name in upload";
           break;
         default:
           errorMessage = err.message;
       }
 
-      return next(new ErrorResponse(errorMessage, statusCode));
+      return next(new CustomError(errorMessage, statusCode));
     } else if (err) {
       // Handle other errors (including our custom ErrorResponse)
       return next(err);
@@ -68,22 +76,12 @@ const handleMulterUpload = (req, res, next) => {
 
 // Routes with enhanced error handling
 // Create a new submission
-router.post(
-  "/",
-  handleMulterUpload,
-  createSubmission
-);
+router.post("/", handleMulterUpload, asyncHandler(createSubmission));
 
 // Get submissions by week number for a specific user
-router.get(
-  "/", 
-  getSubmissionsByWeek
-);
+router.get("/", asyncHandler(getUserSubmission));
 
 // Delete a specific submission by ID
-router.delete(
-  "/:submissionId", 
-  deleteSubmission
-);
+router.delete("/:submissionId", asyncHandler(deleteSubmission));
 
 export default router;
